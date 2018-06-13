@@ -47748,6 +47748,29 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -47764,7 +47787,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
                 order: 'asc'
             },
             limit: 50,
-            quickSearchQuery: ''
+            quickSearchQuery: '',
+            editing: {
+                id: null,
+                form: {},
+                errors: []
+            }
         };
     },
 
@@ -47815,6 +47843,26 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         sortBy: function sortBy(column) {
             this.sort.key = column;
             this.sort.order = this.sort.order === 'asc' ? 'desc' : 'asc';
+        },
+        edit: function edit(record) {
+            this.editing.errors = [];
+            this.editing.id = record.id;
+            this.editing.form = _.pick(record, this.response.updatable);
+        },
+        isUpdatable: function isUpdatable(column) {
+            return this.response.updatable.includes(column);
+        },
+        update: function update() {
+            var _this3 = this;
+
+            axios.patch(this.endpoint + '/' + this.editing.id, this.editing.form).then(function () {
+                _this3.getRecords().then(function () {
+                    _this3.editing.id = null;
+                    _this3.editing.form = {};
+                });
+            }).catch(function (error) {
+                _this3.editing.errors = error.response.data.errors;
+            });
         }
     }
 });
@@ -48297,10 +48345,137 @@ var render = function() {
                 "tr",
                 [
                   _vm._l(record, function(columnValue, column) {
-                    return _c("td", [_vm._v(_vm._s(columnValue))])
+                    return _c(
+                      "td",
+                      [
+                        _vm.editing.id === record.id && _vm.isUpdatable(column)
+                          ? [
+                              _c("input", {
+                                directives: [
+                                  {
+                                    name: "model",
+                                    rawName: "v-model",
+                                    value: _vm.editing.form[column],
+                                    expression: "editing.form[column]"
+                                  }
+                                ],
+                                staticClass: "form-control",
+                                class: {
+                                  "is-invalid": _vm.editing.errors[column]
+                                },
+                                attrs: { type: "text", name: columnValue },
+                                domProps: { value: _vm.editing.form[column] },
+                                on: {
+                                  input: function($event) {
+                                    if ($event.target.composing) {
+                                      return
+                                    }
+                                    _vm.$set(
+                                      _vm.editing.form,
+                                      column,
+                                      $event.target.value
+                                    )
+                                  }
+                                }
+                              }),
+                              _vm._v(" "),
+                              _vm.editing.errors[column]
+                                ? _c(
+                                    "span",
+                                    {
+                                      staticClass: "invalid-feedback",
+                                      attrs: { role: "alert" }
+                                    },
+                                    [
+                                      _c("strong", [
+                                        _vm._v(
+                                          _vm._s(_vm.editing.errors[column][0])
+                                        )
+                                      ])
+                                    ]
+                                  )
+                                : _vm._e()
+                            ]
+                          : [
+                              _vm._v(
+                                "\n                                " +
+                                  _vm._s(columnValue) +
+                                  "\n                            "
+                              )
+                            ]
+                      ],
+                      2
+                    )
                   }),
                   _vm._v(" "),
-                  _c("td", [_vm._v("edit")])
+                  _c(
+                    "td",
+                    [
+                      _vm.editing.id !== record.id
+                        ? _c(
+                            "button",
+                            {
+                              staticClass: "btn btn-sm btn-link",
+                              on: {
+                                click: function($event) {
+                                  $event.preventDefault()
+                                  _vm.edit(record)
+                                }
+                              }
+                            },
+                            [
+                              _vm._v(
+                                "\n                                Edit\n                            "
+                              )
+                            ]
+                          )
+                        : _vm._e(),
+                      _vm._v(" "),
+                      _vm.editing.id === record.id
+                        ? [
+                            _c(
+                              "button",
+                              {
+                                staticClass: "btn btn-sm btn-link",
+                                on: {
+                                  click: function($event) {
+                                    $event.preventDefault()
+                                    return _vm.update($event)
+                                  }
+                                }
+                              },
+                              [
+                                _vm._v(
+                                  "\n                                    Save\n                                "
+                                )
+                              ]
+                            ),
+                            _vm._v(" "),
+                            _c("br"),
+                            _vm._v(" "),
+                            _c(
+                              "button",
+                              {
+                                staticClass: "btn btn-sm btn-link",
+                                attrs: { value: "Cancel" },
+                                on: {
+                                  click: function($event) {
+                                    $event.preventDefault()
+                                    _vm.editing.id = null
+                                  }
+                                }
+                              },
+                              [
+                                _vm._v(
+                                  "\n                                    Cancel\n                                "
+                                )
+                              ]
+                            )
+                          ]
+                        : _vm._e()
+                    ],
+                    2
+                  )
                 ],
                 2
               )

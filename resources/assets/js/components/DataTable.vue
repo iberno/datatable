@@ -36,8 +36,31 @@
                     </thead>
                     <tbody>
                         <tr v-for="record in filteredRecords">
-                            <td v-for="columnValue, column in record">{{ columnValue }}</td>
-                            <td>edit</td>
+                            <td v-for="columnValue, column in record">
+                                <template v-if="editing.id === record.id && isUpdatable(column)">
+                                        <input type="text" class="form-control" :class="{ 'is-invalid': editing.errors[column] }" :name="columnValue" v-model="editing.form[column]">
+                                        <span class="invalid-feedback" role="alert" v-if="editing.errors[column]">
+                                            <strong>{{ editing.errors[column][0] }}</strong>
+                                        </span>
+                                </template>
+                                <template v-else>
+                                    {{ columnValue }}
+                                </template>
+                            </td>
+                            <td>
+                                <button @click.prevent="edit(record)" class="btn btn-sm btn-link" v-if="editing.id !== record.id">
+                                    Edit
+                                </button>
+                                <template v-if="editing.id === record.id">
+                                    <button @click.prevent="update" class="btn btn-sm btn-link">
+                                        Save
+                                    </button>
+                                    <br>
+                                    <button @click.prevent="editing.id = null" class="btn btn-sm btn-link" value="Cancel">
+                                        Cancel
+                                    </button>
+                                </template>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -62,7 +85,12 @@
                     order: 'asc',
                 },
                 limit: 50,
-                quickSearchQuery: ''
+                quickSearchQuery: '',
+                editing: {
+                    id: null,
+                    form: {},
+                    errors: []
+                }
             }
         },
         computed: {
@@ -107,6 +135,24 @@
             sortBy(column) {
                 this.sort.key = column
                 this.sort.order = this.sort.order === 'asc' ? 'desc' : 'asc'
+            },
+            edit (record) {
+                this.editing.errors = []
+                this.editing.id = record.id
+                this.editing.form = _.pick(record, this.response.updatable)
+            },
+            isUpdatable (column) {
+                return this.response.updatable.includes(column)
+            },
+            update () {
+                axios.patch(`${this.endpoint}/${this.editing.id}`, this.editing.form).then(() => {
+                    this.getRecords().then(() => {
+                        this.editing.id = null
+                        this.editing.form = {}
+                    })
+                }).catch ((error) => {
+                    this.editing.errors = error.response.data.errors
+                })
             }
         }
     }
